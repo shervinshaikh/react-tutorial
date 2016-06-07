@@ -11,37 +11,28 @@
  */
 
 
+var config = {
+  apiKey: "AIzaSyC1CoklrjbCE5fyzoouqZ6ABHVwBg-Lhq8",
+  authDomain: "reactjs-workshop-sb.firebaseapp.com",
+  databaseURL: "https://reactjs-workshop-sb.firebaseio.com",
+};
+
+firebase.initializeApp(config);
 
 var CommentBox = React.createClass({
+  mixins: [ReactFireMixin],
+
   getInitialState: function() {
     return {data: []};
   },
-  componentDidMount: function() {
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      cache: false,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
+  componentWillMount: function() {
+    // Here we bind the component to Firebase and it handles all data updates,
+    // no need to poll as in the React example.
+    this.bindAsArray(firebase.database().ref('commentsBox'), 'data');
   },
   handleCommentSubmit: function(comment) {
-    $.ajax({
-      url: this.props.url,
-      dataType: 'json',
-      type: 'POST',
-      data: comment,
-      success: function(data) {
-        this.setState({data: data});
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error(this.props.url, status, err.toString());
-      }.bind(this)
-    });
+    // Here we push the update out to Firebase and let ReactFire update this.state.data
+    this.firebaseRefs['data'].push(comment);
   },
   render: function() {
     return (
@@ -56,9 +47,9 @@ var CommentBox = React.createClass({
 
 var CommentList = React.createClass({
   render: function() {
-    var commentNodes = this.props.data.map(function(comment) {
+    var commentNodes = this.props.data.map(function(comment, index) {
       return (
-        <Comment author={comment.author} key={comment.id}>
+        <Comment author={comment.author} key={index}>
           {comment.text}
         </Comment>
       );
